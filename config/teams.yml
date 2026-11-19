@@ -1,0 +1,15 @@
+# Teams that can deploy Streamlit apps. The CI/CD reads this file:
+#   apps/<team folder>/<app>/  ->  schema <TEAM> in the environment database,
+#   owner role <TEAM>_STREAMLIT_OWNER<suffix>, compute pool <TEAM>_STREAMLIT_POOL<suffix>.
+# A team is added here AND onboarded in Snowflake by an admin (snowflake/onboard_team.sh).
+#
+# rights: which access models the team may use (owner = owner's rights, caller = restricted caller's rights)
+# warehouse: query warehouse for the team's apps (reuse an existing, tagged warehouse)
+FINANCE:
+  folder: finance
+  allowed_rights: [caller]
+  warehouse: FINANCE_WH
+COMERCIAL:
+  folder: comercial
+  allowed_rights: [owner]
+  warehouse: COMERCIAL_WH
