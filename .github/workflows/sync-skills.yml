@@ -1,0 +1,49 @@
+name: Sync skills
+
+# push dev  -> changed skills published to DB_COCO_SKILLS.SKILLS_DEV ("[DEV]", hidden, READ to <SKILL>_SKILL_DEV)
+# push main -> changed skills published to SKILLS_PRD (certified + release email to <SKILL>_SKILL_USERS)
+# The per-skill roles are created by the pipeline (SP_SKILL_CREATE_ROLES). Logic lives in Snowflake.
+on:
+  push:
+    branches: [dev, main]
+    paths: ['skills/**', 'ci/sync_skills.py', '.github/workflows/sync-skills.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  SNOWFLAKE_ACCOUNT: SFPSCOGS-ARAJOLA
+
+# One sync at a time: both branches share the deploy state in Snowflake
+concurrency:
+  group: skill-sync
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: ./ci/validate_skills.sh
+
+  sync:
+    needs: validate
+    runs-on: ubuntu-latest
+    environment: ${{ github.ref_name == 'main' && 'prd' || 'dev' }}
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install pyyaml==6.0.2
+      - uses: snowflakedb/snowflake-actions@v3
+        with:
+          use-oidc: true
+      - name: Upload skills and sync (Snowflake)
+        env:
+          BRANCH: ${{ github.ref_name }}
+        run: python ci/sync_skills.py --branch "$BRANCH" --commit "$GITHUB_SHA"

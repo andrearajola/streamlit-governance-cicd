@@ -1,0 +1,6 @@
+name: sales_by_country
+title: Sales by country
+description: Monthly sales per country. Each analyst only sees the countries their role allows (row access policy).
+owner_email: a.rajolapescarini@snowflake.com
+rights: caller          # restricted caller's rights: data is read with the viewer's privileges
+viewers: []             # FINANCE_STREAMLIT_USERS already sees every FINANCE app

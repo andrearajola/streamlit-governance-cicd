@@ -1,0 +1,13 @@
+# Deployment environments. One entry per Snowflake environment.
+# Verisure: dev and prd are two accounts, both with database DB_STREAMLIT and role_suffix "".
+# Test account (one account simulates both): dev uses DB_STREAMLIT_DEV and the _DEV role suffix.
+dev:
+  branch: dev                 # git branch that deploys here
+  github_environment: dev     # GitHub environment (OIDC subject: environment:dev)
+  database: DB_STREAMLIT_DEV
+  role_suffix: _DEV           # <TEAM>_STREAMLIT_OWNER_DEV, <TEAM>_STREAMLIT_POOL_DEV, ...
+prd:
+  branch: main
+  github_environment: prd     # protected: needs approval before deploy
+  database: DB_STREAMLIT
+  role_suffix: ""
