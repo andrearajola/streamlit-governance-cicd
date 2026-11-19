@@ -1,17 +1,20 @@
+"""Budget tracker - FINANCE (restricted caller's rights): actuals per country, filtered by the viewer's role."""
 import streamlit as st
-from snowflake.snowpark.context import get_active_session
 
-password = "Verisure2026!"
-
-
-def get_conn():
-    return st.connection("snowflake-callers-rights")
+st.set_page_config(page_title="Budget tracker", layout="wide")
+callers = st.connection("snowflake-callers-rights")   # top of the script (viewer token lasts 2 minutes)
 
 
-@st.cache_data(ttl=60)
+@st.cache_data(ttl=60, scope="session")
 def load():
-    return get_conn().query("SELECT * FROM TEST_DATA_FINANCE.GOLD.SALES")
+    return callers.query(
+        "SELECT country, SUM(amount) AS actual FROM TEST_DATA_FINANCE.GOLD.SALES GROUP BY country ORDER BY country"
+    )
 
 
 st.title("Budget tracker")
-st.dataframe(load())
+actuals = load()
+budget = st.number_input("Monthly budget per country", min_value=0, value=1000, step=100)
+actuals["BUDGET"] = budget * 2
+actuals["VS_BUDGET"] = actuals["ACTUAL"] - actuals["BUDGET"]
+st.dataframe(actuals, hide_index=True)
