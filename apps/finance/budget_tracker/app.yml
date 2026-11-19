@@ -1,0 +1,6 @@
+name: budget_tracker
+title: Budget tracker
+description: Actuals vs budget per country (each viewer sees only their countries).
+owner_email: a.rajolapescarini@snowflake.com
+rights: caller
+viewers: []
