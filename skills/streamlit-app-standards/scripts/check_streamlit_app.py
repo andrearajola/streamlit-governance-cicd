@@ -86,14 +86,19 @@ class Checker:
     def check_branch(self, head: str, base: str) -> None:
         if not head or not base:
             return
-        prefixes = self.rule("BR001").get("feature_prefixes", ["feature", "fix"])
+        r = self.rule("BR001")
+        prefixes = r.get("feature_prefixes", ["feature", "fix"])
+        scopes = set(self.by_folder) | {str(s).lower() for s in r.get("platform_scopes", ["platform"])}
         details: list[str] = []
         if base == "dev":
-            m = re.match(r"^(%s)/([a-z0-9]+)-[a-z0-9][a-z0-9-]*$" % "|".join(map(re.escape, prefixes)), head)
-            if not m:
-                details.append(f"branch '{head}' does not match <{'|'.join(prefixes)}>/<team>-<description> (lowercase, '-' separated)")
-            elif m.group(2) not in self.by_folder:
-                details.append(f"branch '{head}': team '{m.group(2)}' is not in config/teams.yml")
+            if head == "main" and r.get("sync_from_main", True):
+                pass  # sync dev with main after a release
+            else:
+                m = re.match(r"^(%s)/([a-z0-9]+)-[a-z0-9][a-z0-9-]*$" % "|".join(map(re.escape, prefixes)), head)
+                if not m:
+                    details.append(f"branch '{head}' does not match <{'|'.join(prefixes)}>/<team>-<description> (lowercase, '-' separated)")
+                elif m.group(2) not in scopes:
+                    details.append(f"branch '{head}': '{m.group(2)}' is not a team in config/teams.yml (or a platform scope)")
         elif base == "main" and head != "dev":
             details.append(f"pull requests into main must come from dev, not '{head}'")
         self.report("BR001", "(branch)", details)

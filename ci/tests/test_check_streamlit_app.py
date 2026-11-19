@@ -258,6 +258,8 @@ def test_select_star_warning(tmp_path):
     ("feature/marketing-x", "dev", False),
     ("Feature/Finance-X", "dev", False),
     ("my-branch", "dev", False),
+    ("feature/platform-cicd-fix", "dev", True),
+    ("main", "dev", True),
     ("dev", "main", True),
     ("feature/finance-x", "main", False),
 ])
