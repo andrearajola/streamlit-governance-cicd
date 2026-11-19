@@ -15,9 +15,10 @@ permissions:
 env:
   SNOWFLAKE_ACCOUNT: SFPSCOGS-ARAJOLA
 
-# One sync at a time: both branches share the deploy state in Snowflake
+# One sync at a time per branch (deploy state is per branch). Per-branch so a prd sync waiting
+# for approval never blocks dev syncs.
 concurrency:
-  group: skill-sync
+  group: skill-sync-${{ github.ref_name }}
   cancel-in-progress: false
 
 jobs:
