@@ -9,11 +9,11 @@ env=${2:?usage: install.sh <snow-connection> <dev|prd>}
 cfg="config.${env}.env"
 [[ -f $cfg ]] || { echo "missing $cfg"; exit 1; }
 
-# config -> -D key=value for snow templating (identifiers are validated: letters, digits, _ . : / -)
+# config -> -D key=value for snow templating (identifiers are validated: letters, digits, _ . : / @ -)
 vars=()
 while IFS='=' read -r k v; do
   [[ -z $k || $k == \#* ]] && continue
-  [[ $v =~ ^[A-Za-z0-9_.:/-]*$ ]] || { echo "invalid value for $k: $v"; exit 1; }
+  [[ $v =~ ^[A-Za-z0-9_.:/@-]*$ ]] || { echo "invalid value for $k: $v"; exit 1; }
   vars+=(-D "$k=$v")
 done < "$cfg"
 

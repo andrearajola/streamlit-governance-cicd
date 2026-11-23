@@ -85,4 +85,6 @@ rules:
     title: Branch naming
     severity: error
     feature_prefixes: [feature, fix]
-    fix: Open PRs into dev from feature/<team>-<short-description> (or fix/...). PRs into main only come from dev.
+    platform_scopes: [platform]      # CI/CD, rules or config changes that belong to no team
+    sync_from_main: true             # allow PR main -> dev (sync dev after a release)
+    fix: Open PRs into dev from feature/<team>-<short-description> (or fix/..., or feature/platform-... for CI/CD changes). PRs into main only come from dev.

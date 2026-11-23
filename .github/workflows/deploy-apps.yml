@@ -32,7 +32,7 @@ jobs:
       environment: ${{ steps.plan.outputs.environment }}
       apps: ${{ steps.plan.outputs.apps }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - id: plan
@@ -78,14 +78,14 @@ jobs:
     concurrency:
       group: deploy-${{ needs.plan.outputs.environment }}-${{ matrix.app }}
       cancel-in-progress: false
+    # No max-parallel: every app job starts at once, so ONE prd approval covers the whole release
     strategy:
       fail-fast: false
-      max-parallel: 2
       matrix:
         app: ${{ fromJSON(needs.plan.outputs.apps) }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.11"
       - run: pip install pyyaml==6.0.2
