@@ -37,6 +37,7 @@ Explain to the developer:
 - `streamlit_app.py`: the entry point.
 - `requirements.txt`: exact pins only (`pandas==2.2.3`). Never list `streamlit`, because the container image has it.
 - `README.md`: what the app does, the data used, and a contact.
+  If a PR comment reports FAILED, fix every error listed in "How to fix" and push again: the same comment is updated.
 - `app.yml`:
 ```yaml
 name: <app_name>            # same as the folder
