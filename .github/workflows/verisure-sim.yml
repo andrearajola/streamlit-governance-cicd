@@ -1,0 +1,52 @@
+name: Verisure permissions test
+
+# Manual only. Runs with the minimal setup proposed for the Verisure DEV account:
+# one pipeline role that owns one database, a warehouse, the shared SYSTEM_COMPUTE_POOL_CPU,
+# an OIDC service user (no secrets) and a network policy with the GitHub Actions managed rule.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  SNOWFLAKE_ACCOUNT: SFPSCOGS-ARAJOLA
+
+jobs:
+  sim:
+    runs-on: ubuntu-latest
+    environment: verisure   # OIDC subject: repo:<owner>/<repo>:environment:verisure
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+      - name: Set up Snowflake CLI (OIDC)
+        uses: snowflakedb/snowflake-actions@v3
+        with:
+          use-oidc: true
+      - name: Test the connection
+        run: snow connection test -x
+      - name: Who am I
+        run: snow sql -x -q "SELECT CURRENT_USER(), CURRENT_ROLE(), CURRENT_WAREHOUSE()"
+      - name: Upload the app
+        run: |
+          STAGE="@DB_VERISURE_SIM.FINANCE.APP_SRC/verisure_sim/${GITHUB_SHA::12}"
+          snow sql -x -q "REMOVE ${STAGE}/;
+          PUT 'file://${PWD}/ci/verisure_sim/streamlit_app.py' ${STAGE}/ AUTO_COMPRESS=FALSE OVERWRITE=TRUE;
+          PUT 'file://${PWD}/ci/verisure_sim/requirements.txt' ${STAGE}/ AUTO_COMPRESS=FALSE OVERWRITE=TRUE;"
+          echo "STAGE=${STAGE}" >> "$GITHUB_ENV"
+      - name: Create the app (container runtime, shared system pool, no PyPI integration)
+        run: |
+          snow sql -x -q "CREATE OR REPLACE STREAMLIT DB_VERISURE_SIM.FINANCE.VERISURE_SIM
+            FROM '${STAGE}' MAIN_FILE = 'streamlit_app.py'
+            QUERY_WAREHOUSE = COMPUTE_WH
+            RUNTIME_NAME = 'SYSTEM\$ST_CONTAINER_RUNTIME_PY3_11'
+            COMPUTE_POOL = SYSTEM_COMPUTE_POOL_CPU
+            TITLE = 'Verisure permissions test'
+            COMMENT = 'commit=${GITHUB_SHA}; deployed_by=ci-cd';"
+      - name: Verify
+        run: |
+          snow sql -x -q "SHOW STREAMLITS IN SCHEMA DB_VERISURE_SIM.FINANCE;"
+          snow sql -x -q "DESCRIBE STREAMLIT DB_VERISURE_SIM.FINANCE.VERISURE_SIM;"
+          snow sql -x -q "SELECT COUNTRY, SUM(AMOUNT) FROM DB_VERISURE_SIM.DEMO_DATA.SALES GROUP BY 1 ORDER BY 1;"
